@@ -5,7 +5,7 @@ import requests
 BASE_URL = "http://localhost:1234/v1"
 
 # The single model used for every role
-MODEL_ID = "qwen/qwq-32b"
+MODEL_ID = "qwen2.5-14b-instruct-1m"
 
 TEMPERATURE = 0.7
 
