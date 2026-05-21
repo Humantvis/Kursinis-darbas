@@ -1,4 +1,6 @@
 import json
+import os
+import datetime
 import requests
 
 # The local model server address
@@ -16,7 +18,10 @@ TEMPERATURE = 0.7
 # Temperature for the team-generation step.
 ANALYSIS_TEMPERATURE = 0.3
 
-TOPIC = "Is 0.999... equal to 1?"
+TOPIC = "AI is beneficial for humanity"
+
+# Output folder
+OUTPUT_DIR = "debatu_isvestis"
 
 
 def call_model(system_prompt, user_prompt, temperature=None):
@@ -143,14 +148,33 @@ def build_speaking_schedule(teams, speakers_per_team):
 # Step 4: Run the debate
 
 def run_debate():
-    print(f"\nTopic: '{TOPIC}'")
-    print("Asking the model to identify debate sides...\n")
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # Build a safe filename from the topic
+    safe_topic = "".join(c if c.isalnum() or c in " _-" else "_" for c in TOPIC)[:60].strip()
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join(OUTPUT_DIR, f"{safe_topic}__{timestamp}.txt")
+
+    lines = []
+
+    def log(text=""):
+        print(text)
+        lines.append(text)
+
+    log(f"Topic: '{TOPIC}'")
+    log(f"Model: {MODEL_ID}")
+    log(f"Speakers per team: {SPEAKERS_PER_TEAM}")
+    log(f"Temperature: {TEMPERATURE}  |  Analysis temperature: {ANALYSIS_TEMPERATURE}")
+    log("=" * 70)
+    log("Asking the model to identify debate sides...")
+    log()
 
     teams = generate_teams(TOPIC)
 
-    print(f"Teams generated ({len(teams)} sides):")
+    log(f"Teams generated ({len(teams)} sides):")
     for t in teams:
-        print(f"  {t['name']}: {t['stance']}")
+        log(f"  {t['name']}: {t['stance']}")
+    log()
 
     debate_log = ""
     schedule = build_speaking_schedule(teams, SPEAKERS_PER_TEAM)
@@ -169,10 +193,12 @@ def run_debate():
         reply = call_model(system_prompt, user_prompt)
 
         label = f"{team['name']} — Speaker {speaker_number}"
-        print(f"\n{label}:\n{reply}\n")
+        log(f"\n{label}:\n{reply}\n")
         debate_log += f"\n\n{label}:\n{reply}"
 
-    print("FINAL OUTPUT")
+    log("=" * 70)
+    log("FINAL OUTPUT")
+    log("=" * 70)
 
     user_prompt = (
         f"The debate topic is: '{TOPIC}'.\n\n"
@@ -181,7 +207,12 @@ def run_debate():
     )
     finalOutput = call_model(build_final_prompt(TOPIC, teams), user_prompt)
 
-    print(f"\n{finalOutput}\n")
+    log(f"\n{finalOutput}\n")
+
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+    print(f"\n[Output saved to: {filename}]")
 
     return teams, debate_log, finalOutput
 
