@@ -1,0 +1,78 @@
+======================================================================
+LLM-as-a-Judge Evaluator
+Evaluator model       : qwen2.5-14b-instruct-1m
+Grading instructions  : grading_instructions.txt
+Timestamp             : 20260526_154905
+======================================================================
+
+[OK] Loaded grading instructions (9246 chars) from 'grading_instructions.txt'
+
+[SKIP] Folder not found: vieno_modelio_isvestis_prompted
+
+[SKIP] Folder not found: deep_thinking_isvestis
+
+[SKIP] Folder not found: deep_thinking_isvestis_prompted
+
+======================================================================
+TOPIC: AI is beneficial for humanity
+======================================================================
+
+  Generating reference argument set for this topic...
+  Reference arguments (15):
+    - AI enhances medical diagnosis accuracy.
+    - Automation through AI increases productivity.
+    - AI can predict natural disasters improving safety.
+    - Personalized learning with AI improves education outcomes.
+    - AI reduces human error in complex calculations and operations.
+    - Facial recognition technology aids in crime prevention.
+    - AI-driven innovations lower costs for consumer goods.
+    - AI supports elderly care, enhancing quality of life.
+    - AI systems can process big data to inform policy decisions.
+    - AI fosters creativity by assisting artists and designers.
+    - Job displacement due to AI automation threatens employment.
+    - Bias in AI algorithms can perpetuate social inequalities.
+    - Over-reliance on AI may lead to security vulnerabilities.
+    - Lack of transparency in AI decision-making hinders public trust.
+    - AI development raises ethical concerns about privacy invasion.
+
+  Source : Debate system
+  File   : AI is beneficial for humanity__20260521_133247.txt
+  Words  : 2187  |  Named entities (approx): 12
+  Scoring with LLM...
+  [Scoring failed for this entry]
+
+  Source : Single model
+  File   : AI is beneficial for humanity__20260521_133429.txt
+  Words  : 257  |  Named entities (approx): 2
+  Scoring with LLM...
+  Argument Coverage         : 7.5/10
+  Argument Depth            : 6.0/10
+  Balanced Representation   : 4.0/10
+    PRO units: 12  |  CON units: 3
+  Semantic Relevance        : 9.0/10
+    The response directly addresses the proposition with well-structured arguments on both sides, though it briefly touches on some challenges.
+  Factual Consistency       : 8.0/10
+  Coverage — covered     : ['AI enhances medical diagnosis accuracy', 'Automation through AI increases productivity', 'AI can predict natural disasters improving safety', 'Personalized learning with AI improves education outcomes', 'AI reduces human error in complex calculations and operations', 'Facial recognition technology aids in crime prevention', 'AI-driven innovations lower costs for consumer goods', 'AI supports elderly care, enhancing quality of life', 'AI systems can process big data to inform policy decisions', 'AI fosters creativity by assisting artists and designers', 'Job displacement due to AI automation threatens employment', 'Bias in AI algorithms can perpetuate social inequalities']
+  Coverage — not covered : ['Over-reliance on AI may lead to security vulnerabilities', 'Lack of transparency in AI decision-making hinders public trust', 'AI development raises ethical concerns about privacy invasion']
+  ── Composite score        : 6.8/10
+
+  ──────────────────────────────────────────────────────────────────
+  Summary — AI is beneficial for humanity
+  Source                                Wds   Cov   Dep   Bal   Rel   Fct   Cmp
+  ─────────────────────────────────────────────────────────────────────────────
+  Debate system                       2187  scoring failed
+  Single model                         257   7.5   6.0   4.0   9.0   8.0   6.8
+  Cov=Coverage Dep=Depth Bal=Balance Rel=Relevance Fct=Factual Cmp=Composite
+
+======================================================================
+OVERALL AVERAGE SCORES (across all topics and runs)
+======================================================================
+
+  Source                                Wds   Cov   Dep   Bal   Rel   Fct   Cmp
+  ────────────────────────────────────────────────────────────────────
+  Debate system                      2187.0   N/A   N/A   N/A   N/A   N/A   N/A
+  Single model                       257.0   7.5   6.0   4.0   9.0   8.0   6.8
+
+Cov=Coverage  Dep=Depth  Bal=Balance  Rel=Relevance  Fct=Factual  Cmp=Composite
+Weights: Coverage 35%  Depth 20%  Balance 20%  Relevance 15%  Factual 10%
+(Factual weight redistributed to Coverage when N/A)
