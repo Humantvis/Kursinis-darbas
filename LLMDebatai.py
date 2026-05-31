@@ -50,7 +50,7 @@ def call_model(system_prompt, user_prompt, temperature=None):
     return response.json()["choices"][0]["message"]["content"]
 
 
-# Step 1: Ask the AI how many teams are needed and what their stances are
+# Step 1: How many teams, what are their stances
 
 def generate_teams(topic):
     system_prompt = (
@@ -77,7 +77,6 @@ def generate_teams(topic):
 
     raw = call_model(system_prompt, user_prompt, temperature=ANALYSIS_TEMPERATURE)
 
-    # Strip accidental markdown fences if the model adds them despite instructions
     clean = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
     try:
@@ -150,8 +149,13 @@ def build_speaking_schedule(teams, speakers_per_team):
 def run_debate():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    # Build a safe filename from the topic
-    safe_topic = "".join(c if c.isalnum() or c in " _-" else "_" for c in TOPIC)[:60].strip()
+    safe_chars = []
+    for c in TOPIC:
+        if c.isalnum() or c in " _-":
+            safe_chars.append(c)
+        else:
+            safe_chars.append("_")
+    safe_topic = "".join(safe_chars)[:60].strip()
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = os.path.join(OUTPUT_DIR, f"{safe_topic}__{timestamp}.txt")
 
@@ -165,8 +169,6 @@ def run_debate():
     log(f"Model: {MODEL_ID}")
     log(f"Speakers per team: {SPEAKERS_PER_TEAM}")
     log(f"Temperature: {TEMPERATURE}  |  Analysis temperature: {ANALYSIS_TEMPERATURE}")
-    log("=" * 70)
-    log("Asking the model to identify debate sides...")
     log()
 
     teams = generate_teams(TOPIC)
@@ -196,9 +198,7 @@ def run_debate():
         log(f"\n{label}:\n{reply}\n")
         debate_log += f"\n\n{label}:\n{reply}"
 
-    log("=" * 70)
     log("FINAL OUTPUT")
-    log("=" * 70)
 
     user_prompt = (
         f"The debate topic is: '{TOPIC}'.\n\n"
@@ -217,7 +217,6 @@ def run_debate():
     return teams, debate_log, finalOutput
 
 
-# Entry point
 
 if __name__ == "__main__":
     run_debate()

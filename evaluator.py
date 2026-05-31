@@ -1,25 +1,3 @@
-"""
-evaluator.py — LLM-as-a-Judge evaluator for debate vs. single-model outputs.
-
-Usage:
-    python evaluator.py
-
-The script reads all .txt files from the output folders, groups them by topic,
-and asks the local LLM to score each answer on five criteria defined in
-grading_instructions.txt.
-
-Scoring criteria (each 0–10):
-    1. Argument Coverage         — proportion of reference arguments addressed
-    2. Argument Depth            — how well each covered argument is elaborated
-    3. Balanced Representation   — how fairly multiple perspectives are represented
-    4. Semantic Relevance        — how well the output addresses the actual topic
-    5. Factual Consistency       — accuracy of verifiable claims (skipped if N/A)
-
-Also computes two automatic metrics without LLM:
-    - Word count
-    - Named entity count (rough: capitalised multi-word phrases)
-"""
-
 import os
 import re
 import json
@@ -27,11 +5,10 @@ import glob
 import datetime
 import requests
 
-# ── Configuration ─────────────────────────────────────────────────────────────
 
 BASE_URL    = "http://localhost:1234/v1"
 MODEL_ID    = "qwen2.5-14b-instruct-1m"
-TEMPERATURE = 0.0   # deterministic scoring
+TEMPERATURE = 0.0
 
 OUTPUT_FOLDERS = [
     "debatu_isvestis",
@@ -43,12 +20,9 @@ OUTPUT_FOLDERS = [
 
 RESULTS_DIR = "evaluation_results"
 
-# Path to the grading instructions file used as the LLM system prompt.
-# The evaluator reads this at startup — edit the file to change scoring behaviour.
 GRADING_INSTRUCTIONS_FILE = "grading_instructions.txt"
 
 # Weights must sum to 1.0.
-# If Factual Consistency is N/A its weight is redistributed to Coverage.
 WEIGHTS = {
     "argument_coverage":       0.35,
     "argument_depth":          0.20,
@@ -57,7 +31,6 @@ WEIGHTS = {
     "factual_consistency":     0.10,
 }
 
-# ── LLM call ──────────────────────────────────────────────────────────────────
 
 def call_model(system_prompt, user_prompt):
     url = f"{BASE_URL}/chat/completions"
@@ -73,17 +46,13 @@ def call_model(system_prompt, user_prompt):
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"]
 
-# ── Automatic metrics ─────────────────────────────────────────────────────────
-
 def word_count(text):
     return len(text.split())
 
 def named_entity_count(text):
-    """Rough heuristic: capitalised multi-word phrases as a proxy for named entities."""
     pattern = r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b'
     return len(set(re.findall(pattern, text)))
 
-# ── File helpers ──────────────────────────────────────────────────────────────
 
 def read_file(path):
     with open(path, encoding="utf-8") as f:
@@ -96,7 +65,6 @@ def extract_topic(content):
     return "Unknown topic"
 
 def extract_answer(content):
-    """Return everything after the first long === separator."""
     sep = "=" * 10
     parts = content.split(sep, 1)
     return parts[1].strip() if len(parts) == 2 else content.strip()
@@ -110,13 +78,8 @@ def folder_label(folder):
         "deep_thinking_isvestis_prompted": "Deep thinking model (prompted)",
     }.get(folder, folder)
 
-# ── Reference argument generation ────────────────────────────────────────────
 
 def generate_reference_arguments(topic):
-    """
-    Ask the model to produce a reference argument set for the topic.
-    Returns a list of argument strings, or an empty list on failure.
-    """
     system_prompt = (
         "You are an expert debate analyst. "
         "Given a debate topic, produce a comprehensive reference argument set covering "
@@ -139,10 +102,8 @@ def generate_reference_arguments(topic):
     print(f"  [WARNING] Could not parse reference arguments. Raw: {raw[:200]}")
     return []
 
-# ── LLM scoring ───────────────────────────────────────────────────────────────
 
 def load_grading_instructions():
-    """Read the grading instructions file and return its contents as a string."""
     if not os.path.isfile(GRADING_INSTRUCTIONS_FILE):
         raise FileNotFoundError(
             f"Grading instructions file not found: '{GRADING_INSTRUCTIONS_FILE}'\n"
@@ -179,10 +140,8 @@ def score_with_llm(topic, answer, source_label, reference_args, system_prompt):
         print(f"  Raw output: {raw[:300]}")
         return None
 
-# ── Composite score ───────────────────────────────────────────────────────────
 
 def composite(scores):
-    """Compute weighted composite. Redistributes factual weight to coverage if N/A."""
     if scores is None:
         return None
 
@@ -204,7 +163,6 @@ def composite(scores):
 
     return round(total, 1)
 
-# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -223,11 +181,9 @@ def main():
     log(f"Timestamp             : {timestamp}")
     log("=" * 70)
 
-    # Load grading instructions from file -- this becomes the LLM system prompt
     system_prompt = load_grading_instructions()
     log(f"\n[OK] Loaded grading instructions ({len(system_prompt)} chars) from '{GRADING_INSTRUCTIONS_FILE}'")
 
-    # Collect files grouped by topic
     topic_groups = {}
     for folder in OUTPUT_FOLDERS:
         if not os.path.isdir(folder):
@@ -325,7 +281,6 @@ def main():
 
         grand_results[topic] = topic_results
 
-        # Summary table for this topic
         log(f"  {'─' * 66}")
         log(f"  Summary — {topic[:50]}")
         header = f"  {'Source':<35} {'Wds':>5} {'Cov':>5} {'Dep':>5} {'Bal':>5} {'Rel':>5} {'Fct':>5} {'Cmp':>5}"
@@ -351,7 +306,6 @@ def main():
             log(row)
         log(f"  Cov=Coverage Dep=Depth Bal=Balance Rel=Relevance Fct=Factual Cmp=Composite")
 
-    # Overall summary across all topics
     log(f"\n{'=' * 70}")
     log("OVERALL AVERAGE SCORES (across all topics and runs)")
     log("=" * 70)

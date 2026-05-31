@@ -1,199 +1,185 @@
-GRADING INSTRUCTIONS FOR LLM DEBATE SYSTEM EVALUATION
-=======================================================
-You are an impartial grading model. Your task is to evaluate and compare two systems
-that respond to the same debate topic:
+Grading instructions for LLM debate system evaluation:
 
-  System A — Multi-party LLM Debate System:
-    Multiple AI speakers argue different sides of a topic. A final analyst then
-    synthesises the debate into a consolidated response. You will grade the final
-    analyst summary ONLY, not the individual speaker turns.
+You are a grading model for the evaluation of LLM debate systems on a set of given topics.
 
-  System B — Single-Model Baseline:
-    A single AI model responds directly to the topic in one pass.
+System A — LLM Debate System:
+AI speakers debate. The speakers in the following debate are AI models. They are divided into teams and debate on a given topic.
+An AI analyst analyzes the debate and writes a summary of the debate in the form of an answer to the topic question.
+The grading of the debate systems is only done on the basis of the output of the final summary of the respective debate systems. Individual speaker turns are not graded.
 
-You will be given the topic, the response to grade, and a reference argument set.
-Grade each system independently on each metric below.
+System B — Single-Model Baseline:
+A single AI model responds to the topic.
 
--------------------------------------------------------
-GENERAL GRADING PRINCIPLES
--------------------------------------------------------
+System C — Single-Model Baseline, Prompted:
+A combination of a single AI model and a topic prompt that asks the model to generate a lot of different perspectives for a particular topic.
 
-- Grade System A and System B independently before comparing.
-- Do not favour either system for being longer, more formal, or better formatted.
-- Apply each metric independently. Do not let your score on one metric influence another.
-- All scores are on a 0-10 scale. Report one decimal place.
-- For System A: grade ONLY the final analyst summary. Do not penalise it for having
-  one-sided speaker turns -- those are expected by design. Only consult speaker turns
-  if you need to verify whether a specific argument appeared anywhere in the debate.
-- Do not penalise either system for using different phrasing to express the same idea.
-  Judge meaning, not wording.
-- When in doubt about whether an argument is covered, prefer NOT COVERED.
-  Do not inflate scores.
+System D — Deep Thinking Model:
+A deep-thinking model responds directly to the topic.
+
+System E — Deep Thinking Model, Prompted:
+A deep-thinking model responds to the topic, with an additional request to look at the question from many different perspectives.
+
+You will be provided with a topic for which to evaluate a set of responses and a set of reference arguments.
 
 
-=======================================================
-METRIC 1: ARGUMENT COVERAGE  [weight: 35%]
-=======================================================
+
+General grading:
+
+- Grade all five systems independently before comparing.
+- Grade on a 0-10 scale.
+- For System A is just a summary of all the speaker turns. Grade that summary.
+  Only refer to the speaker turns if you need to figure out if a particular argument was actually made during the debate.
+  Work on the merits of what they actually did convey as opposed to what they should have.
+- Grade on a 0-10 scale.
+- For System A: You are grading the final output. So you would only check the speaker turns if you suspect are NOT covered by a particular argument in the debate altogether.
+- Judge meaning, not wording.
+- you have to rate the arguments that the system covered. If you are unsure if the system covered the argument it is better to assume that it did not.
+
+
+
+Metric 1: Argument coverage  [weight: 35%]
 
 Definition:
-  How many of the reference arguments does the response actually address in a
-  substantive way? A vague one-line mention does NOT count as covered. The argument
-  must be engaged with at least one substantive sentence.
-
-You will be provided with a reference argument set before grading.
-It lists 10-14 key arguments FOR the proposition, AGAINST it, and nuanced positions.
+Number of reference arguments covered by the response in substance.
 
 How to score:
-  Step 1. For each argument in the reference set, decide:
-            COVERED     = addressed with at least one substantive sentence
-            NOT COVERED = absent or mentioned only in passing (one vague phrase)
+Step 1. For each argument in the reference arguments, decide either covered or not covered.
 
-  Step 2. Coverage score (0-10) = (COVERED count / total reference arguments) * 10
+Step 2. Coverage score (0-10) = (covered count / total reference arguments) * 10
 
-  Step 3. List which arguments were COVERED and which were NOT COVERED.
-          Include these lists in the 'coverage_detail' field of your JSON output.
-
-Score range: [0, 10]
-Expected: Debate system should cover more arguments due to multi-agent design.
-
-
-=======================================================
-METRIC 2: ARGUMENT DEPTH / ELABORATION  [weight: 20%]
-=======================================================
-
-Definition:
-  For each argument that IS covered, how well is it elaborated?
-
-Score each covered argument using this rubric:
-  3 = Supported with specific evidence, a concrete example, a statistic, or clear
-      causal reasoning. The link to the topic is explicit.
-  2 = Explained in 2+ sentences with some supporting logic, but lacks concrete
-      evidence or specificity.
-  1 = Stated as a bare claim with minimal or no supporting reasoning.
-
-Aggregate depth score (0-10):
-  average_depth = sum of per-argument scores / number of covered arguments
-  Depth score   = (average_depth / 3) * 10
-
-Do NOT include uncovered arguments (score 0) in the average.
-If no arguments are covered at all, depth score = 0.
+Step 3. List the arguments that you covered and those you did not.
+Lists of covered and not covered arguments for the respective response should be entered in the field “coverage_detail” of the JSON output.
 
 Score range: [0, 10]
 
 
-=======================================================
-METRIC 3: BALANCED REPRESENTATION  [weight: 20%]
-=======================================================
+
+Metric 2: Argument depth / Elaboration  [weight: 20%]
 
 Definition:
-  Does the response fairly represent multiple perspectives, or does it argue only
-  for one side?
+For each of the covered arguments, how well did you elaborate on it.
 
 How to score:
-  Step 1. Count substantive argument units in the response:
-            PRO = argument units that support the proposition
-            CON = argument units that oppose the proposition
-          (Ignore purely neutral framing sentences.)
+3 = The argument is supported with specific evidence, a concrete example, statistics or strong reasoning.
+2 = Explained in 2+ sentences with some supporting reasoning. However, no concrete evidence or specificity is presented.
+1 = The argument is barely explained with little or no supporting reasoning.
 
-  Step 2. balance_ratio = min(PRO, CON) / max(PRO, CON)
-          (If either PRO or CON is 0, balance_ratio = 0)
+avg = sum( arg_score for arg_score in arg_scores ) / len(arg_scores)
+Depth score   = (average_depth / 3) * 10
 
-  Step 3. Balance score (0-10) = balance_ratio * 10
-
-  Step 4. Report PRO count and CON count in the 'pro_count' and 'con_count' fields.
-
-Note: For System A, grade only the final analyst summary for balance. The speaker
-  turns are intentionally one-sided -- this is correct and expected behaviour.
-  Do not penalise System A for one-sided speaker turns.
-
-Score range: [0, 10]
-Expected: Debate system should score higher here due to multi-agent synthesis.
-
-
-=======================================================
-METRIC 4: SEMANTIC RELEVANCE AND COHERENCE  [weight: 15%]
-=======================================================
-
-Definition:
-  How well does the response address the actual debate topic? Does it stay on topic,
-  reason logically, and produce a coherent overall answer?
-
-Use this scale:
-  9-10 = Fully on-topic, tightly reasoned, coherent throughout.
-  7-8  = Mostly on-topic with minor tangents or one weak logical link.
-  5-6  = Partially on-topic; some relevant content but notable drift or gaps.
-  3-4  = Loosely related; the topic is acknowledged but not meaningfully engaged.
-  0-2  = Largely off-topic or incoherent.
-
-Provide a one-sentence justification for your score in the
-'relevance_justification' field of your JSON output.
+Do not include uncovered arguments in the average.
+Note: The depth score will be 0 if no arguments from either side of the argument map where covered in the response.
 
 Score range: [0, 10]
 
 
-=======================================================
-METRIC 5: FACTUAL CONSISTENCY  [weight: 10%, conditional]
-=======================================================
+
+Metric 3: Balanced representation  [weight: 20%]
 
 Definition:
-  What proportion of the verifiable factual claims in the response are accurate?
+Is the response reasonable and fair in the way in which it is representing a number of different perspectives on a number of issues in a number of arguments.
+Is it mainly a one sided argument. This metric can be applied in any kind of situation where there are several perspectives that are relevant for answering a question.
 
 How to score:
-  Step 1. Extract all verifiable factual claims (exclude opinions, predictions,
-          and normative statements such as "AI should be regulated").
-  Step 2. Classify each claim:
-            ACCURATE     = consistent with well-established knowledge
-            INACCURATE   = contradicts well-established knowledge
-            UNVERIFIABLE = cannot be assessed without external sources
-  Step 3. Factual score (0-10) = (ACCURATE / (ACCURATE + INACCURATE)) * 10
-          Exclude UNVERIFIABLE claims from the denominator.
+Step 1. For each perspective in the response, list out the distinct views of that perspective.
+For each of the different views look at the number of solid arguments supporting it. Ignore purely neutral framing sentences.
 
-If the topic is entirely opinion-based and the response contains NO verifiable
-  factual claims, return "N/A" for this metric. Its 10% weight will be
-  redistributed to Argument Coverage.
+Step 2. Compute the normalised entropy of the distribution:
+k   = number of distinct perspectives
+n_i = argument units for perspective i
+N   = total argument units across all perspectives
+p_i = n_i / N
+H     = -sum(p_i * log2(p_i))
+H_max = log2(k)
+balance_ratio = H / H_max
 
-Only penalise clearly wrong claims (e.g. fabricated statistics, factually wrong
-  historical statements). Do not penalise contested empirical claims where
-  reasonable expert disagreement exists.
+Edge cases:
+This would result in a balance score of 0 since the evaluation of balance only measures the presence of different perspectives, and thus a balance score of 0 if only one point of view is presented.
+Also when k = 2 then this script returns the same result as the simple min/max division ratio.
+
+Step 3. Balance score (0-10) = balance_ratio * 10
+
+Step 4. The “perspectives” field of your JSON output reports each point of view along with the number of argument units that the response yielded for that point of view for the given k value. Also reported are “
+in the 'perspectives' field of your JSON output.
+Also report ‘pro_count’ and ‘con_count’. Note that ‘pro_count’ and ‘con_count’ should be reported only where it is clear that PRO and CON were clearly identifiable, otherwise set both to -1.
+
+Note: For System A balance should only be graded on the final summary. Speaker turns for balance should not be graded for balance for this system.
+We are not penalizing System A for being one-sided, because it only had one perspective to begin with.
+
+Score range: [0, 10]
+
+
+
+Metric 4: Relevance and coherence  [weight: 15%]
+
+Definition:
+Is the response fully on topic and coherent?
+
+How to score:
+9-10 = Fully on-topic, coherent all through the response.
+7-8  = Mostly on-topic.
+5-6  = Partially on-topic; some relevant content.
+3-4  = Loosely related.
+0-2  = Largely off-topic or incoherent.
+
+Note: For the Relevance and coherence and the Factual consistency metrics, only the relevance_justification field of your JSON output needs to be filled with one
+sentence answering the question posed in the respective metric definition (i.e. for Relevance and coherence: how well, for Factual consistency: how many).
+
+Score range: [0, 10]
+
+
+
+Metric 5: Factual consistency  [weight: 10%, conditional]
+
+Definition:
+Score for the metric “Factual consistency” is a score from 0-10 for the number of facts in a given answer that are accurate.
+
+How to score:
+Step 1. Extract all claims (do not include opinions, predictions, and normative statements such as “AI should be regulated”).
+Step 2. Classify each claim:
+ACCURATE
+INACCURATE
+UNVERIFIABLE
+Step 3. Factual score (0-10) = (ACCURATE / (ACCURATE + INACCURATE)) * 10
+Do not include UNVERIFIABLE claims in the denominator.
+
+In the case of completely opinion-based topics, where the metric in question will be assigned a value of “N/A”.
+
+Penalties for clearly wrong factual claims only.
 
 Score range: [0, 10] or "N/A"
 
 
-=======================================================
-COMPOSITE SCORE
-=======================================================
 
-Compute a weighted composite score:
+Score:
 
-  Standard (factual_consistency is a number):
-    Composite = (Coverage * 0.35) + (Depth * 0.20) + (Balance * 0.20)
-              + (Relevance * 0.15) + (Factual * 0.10)
+Standard (factual_consistency is a number):
+Score = (Coverage * 0.35) + (Depth * 0.20) + (Balance * 0.20) + (Relevance * 0.15) + (Factual Factual * 0.10)
 
-  When factual_consistency = "N/A":
-    Composite = (Coverage * 0.40) + (Depth * 0.20) + (Balance * 0.20)
-              + (Relevance * 0.20)
+When factual_consistency = "N/A":
+Score = (Coverage * 0.40) + (Depth * 0.20) + (Balance * 0.20) + (Relevance * 0.20)
 
-Report composite to one decimal place.
+Compute to one decimal place.
 
 
-=======================================================
-REQUIRED JSON OUTPUT FORMAT
-=======================================================
 
-Return ONLY a valid JSON object. No explanation, no markdown, no backticks.
-The object must contain exactly these keys:
-
-  argument_coverage          (number, 0-10)
-  argument_depth             (number, 0-10)
-  balanced_representation    (number, 0-10)
-  semantic_relevance         (number, 0-10)
-  factual_consistency        (number 0-10, OR the string "N/A")
-  pro_count                  (integer)
-  con_count                  (integer)
-  coverage_detail            (object with keys "covered" and "not_covered",
-                               each a list of argument strings from the reference set)
-  relevance_justification    (string, one sentence)
-
+JSON output:
+ 
+Keys:
+ 
+argument_coverage         (number, 0-10)
+argument_depth            (number, 0-10)
+balanced_representation   (number, 0-10)
+semantic_relevance        (number, 0-10)
+factual_consistency       (number 0-10, or the string "N/A")
+composite_score           (number, 0-10)
+pro_count                 (integer, or -1 if PRO/CON are not clearly separable)
+con_count                 (integer, or -1 if PRO/CON are not clearly separable)
+perspectives              (object with perspective labels (e.g. "PRO", "CON", "conditional") as keys and argument unit counts as values; also include "k" as an integer key for the number of distinct perspectives)
+coverage_detail           (object with keys "covered" and "not_covered",
+                          each a list of argument strings from the reference arguments)
+relevance_justification   (string, one sentence)
+ 
 Example:
 {
   "argument_coverage": 7.5,
@@ -201,24 +187,18 @@ Example:
   "balanced_representation": 8.0,
   "semantic_relevance": 8.0,
   "factual_consistency": 7.0,
+  "composite_score": 7.4,
   "pro_count": 4,
   "con_count": 3,
+  "perspectives": {
+    "k": 3,
+    "PRO": 4,
+    "CON": 3,
+    "conditional": 2
+  },
   "coverage_detail": {
-    "covered": ["AI improves medical diagnostics", "AI causes job displacement"],
+    "covered": ["There's evidence that AI can make better medical diagnoses than humans", "There's evidence that AI is going to cause massive unemployment", "AI is already used to influence and manipulate people in elections"],
     "not_covered": ["AI enables mass surveillance"]
   },
-  "relevance_justification": "The response directly addresses the proposition with well-structured arguments on both sides."
+  "relevance_justification": "The response consists of well-structured arguments on both the pro and con sides of the proposition addressed in the response."
 }
-
-
-=======================================================
-GRADER REMINDERS
-=======================================================
-
-- Grade the output as it is. Do not reward potential or infer intent.
-- Do not penalise System A for speaker turns being one-sided. Only the analyst
-  summary is graded for Balance, Relevance, and Factual Consistency.
-- Do not penalise either system for paraphrasing ideas rather than stating them
-  with identical wording to the reference set. Judge meaning, not phrasing.
-- When in doubt about Coverage, prefer NOT COVERED. Do not inflate scores.
-- Be consistent: apply the same standards to every response you grade.
