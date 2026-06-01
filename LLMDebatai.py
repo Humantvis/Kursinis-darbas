@@ -18,7 +18,7 @@ TEMPERATURE = 0.7
 # Temperature for the team-generation step.
 ANALYSIS_TEMPERATURE = 0.3
 
-TOPIC = "AI is beneficial for humanity"
+TOPIC = "Animals should have the same legal rights as humans"
 
 # Output folder
 OUTPUT_DIR = "debatu_isvestis"
@@ -165,7 +165,7 @@ def run_debate():
         print(text)
         lines.append(text)
 
-    log(f"Topic: '{TOPIC}'")
+    log(f"Topic: {TOPIC}")
     log(f"Model: {MODEL_ID}")
     log(f"Speakers per team: {SPEAKERS_PER_TEAM}")
     log(f"Temperature: {TEMPERATURE}  |  Analysis temperature: {ANALYSIS_TEMPERATURE}")
@@ -199,6 +199,7 @@ def run_debate():
         debate_log += f"\n\n{label}:\n{reply}"
 
     log("FINAL OUTPUT")
+    log("=" * 70)
 
     user_prompt = (
         f"The debate topic is: '{TOPIC}'.\n\n"

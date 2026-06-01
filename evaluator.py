@@ -14,8 +14,8 @@ OUTPUT_FOLDERS = [
     "debatu_isvestis",
     "vieno_modelio_isvestis",
     "vieno_modelio_isvestis_prompted",
-    "deep_thinking_isvestis",
-    "deep_thinking_isvestis_prompted",
+    "vieno_modelio_isvestis_giliaimastymo",
+    "vieno_modelio_isvestis_giliaimastymo_prompted",
 ]
 
 RESULTS_DIR = "evaluation_results"
@@ -71,11 +71,11 @@ def extract_answer(content):
 
 def folder_label(folder):
     return {
-        "debatu_isvestis":                 "Debate system",
-        "vieno_modelio_isvestis":          "Single model",
-        "vieno_modelio_isvestis_prompted": "Single model (prompted)",
-        "deep_thinking_isvestis":          "Deep thinking model",
-        "deep_thinking_isvestis_prompted": "Deep thinking model (prompted)",
+        "debatu_isvestis":                         "Debate system",
+        "vieno_modelio_isvestis":                  "Single model",
+        "vieno_modelio_isvestis_prompted":         "Single model (prompted)",
+        "vieno_modelio_isvestis_giliaimastymo":          "Deep thinking model",
+        "vieno_modelio_isvestis_giliaimastymo_prompted": "Deep thinking model (prompted)",
     }.get(folder, folder)
 
 
@@ -118,11 +118,15 @@ def score_with_llm(topic, answer, source_label, reference_args, system_prompt):
     user_prompt = (
         f"Topic: {topic}\n\n"
         f"Reference argument set:\n{ref_block}\n\n"
-        f"Response to grade (source: {source_label}):\n{answer[:4000]}"
+        f"Response to grade (source: {source_label}):\n{answer[:8000]}"
     )
 
     raw = call_model(system_prompt, user_prompt)
-    clean = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+
+    # Extract the JSON object robustly — handles headers, markdown fences, trailing text
+    start = raw.find("{")
+    end   = raw.rfind("}") + 1
+    clean = raw[start:end] if start != -1 and end > start else ""
 
     required_keys = {
         "argument_coverage", "argument_depth", "balanced_representation",

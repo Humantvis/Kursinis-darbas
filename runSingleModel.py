@@ -6,13 +6,13 @@ import requests
 BASE_URL = "http://localhost:1234/v1"
 
 # The single model used for every role
-MODEL_ID = "qwen2.5-14b-instruct-1m"
+MODEL_ID = "qwen/qwq-32b"
 
 # Set to True when using a deep thinking model (e.g. QwQ-32B)
-DEEP_THINKING = False
+DEEP_THINKING = True
 
 # Set to True to add multi-perspective instructions to the prompt
-PROMPTED = False
+PROMPTED = True
 
 TEMPERATURE = 0.7
 
