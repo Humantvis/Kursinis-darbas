@@ -6,17 +6,17 @@ import requests
 BASE_URL = "http://localhost:1234/v1"
 
 # The single model used for every role
-MODEL_ID = "qwen2.5-14b-instruct-1m"
+MODEL_ID = "qwen/qwq-32b"
 
 # Set to True when using a deep thinking model (e.g. QwQ-32B)
-DEEP_THINKING = False
+DEEP_THINKING = True
 
 # Set to True to add multi-perspective instructions to the prompt
 PROMPTED = True
 
 TEMPERATURE = 0.7
 
-TOPIC = "Social media does more harm than good to society"
+TOPIC = "Animals should have the same legal rights as humans"
 
 # Output folder (changes based on DEEP_THINKING and PROMPTED flag)
 _suffix = ("_giliaimastymo" if DEEP_THINKING else "") + ("_prompted" if PROMPTED else "")

@@ -18,7 +18,7 @@ TEMPERATURE = 0.7
 # Temperature for the team-generation step and final analysis.
 ANALYSIS_TEMPERATURE = 0.5
 
-TOPIC = "Social media does more harm than good to society"
+TOPIC = "Animals should have the same legal rights as humans"
 
 # Output folder
 OUTPUT_DIR = "debatu_isvestis"
