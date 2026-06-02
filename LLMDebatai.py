@@ -15,10 +15,10 @@ SPEAKERS_PER_TEAM = 2
 # Temperature for debate speeches.
 TEMPERATURE = 0.7
 
-# Temperature for the team-generation step.
-ANALYSIS_TEMPERATURE = 0.3
+# Temperature for the team-generation step and final analysis.
+ANALYSIS_TEMPERATURE = 0.5
 
-TOPIC = "Animals should have the same legal rights as humans"
+TOPIC = "Social media does more harm than good to society"
 
 # Output folder
 OUTPUT_DIR = "debatu_isvestis"
@@ -72,7 +72,7 @@ def generate_teams(topic):
     user_prompt = (
         f"The debate topic is: '{topic}'. "
         "How many distinct sides does this topic have? "
-        "Return the JSON array of teams now."
+        "Return the JSON array of teams."
     )
 
     raw = call_model(system_prompt, user_prompt, temperature=ANALYSIS_TEMPERATURE)
@@ -101,7 +101,9 @@ def build_speaker_prompt(team, speaker_number, total_speakers, topic):
         f"You are arguing {team['stance']} the proposition: '{topic}'. "
         "Speak only for yourself — do not start your reply with your team name. "
         "You may rebut arguments made by other teams. "
-        "Use evidence and logic. Be persuasive but concise. "
+        "Support every argument with specific evidence, statistics, named studies, "
+        "or concrete real-world examples where possible — do not make unsupported claims. "
+        "Cover as many distinct arguments for your position as possible. "
         "You must respond in English only, regardless of your default language."
     )
 
@@ -111,10 +113,18 @@ def build_speaker_prompt(team, speaker_number, total_speakers, topic):
             "Introduce your team's core position and lay out your main arguments. "
         )
 
+    if speaker_number > 1:
+        prompt += (
+            "You MUST introduce at least two new arguments that have not yet been raised "
+            "by anyone in this debate — including your own teammates. "
+            "Do not simply rebut or repeat what has already been said. "
+            "Expand the scope of the discussion with fresh perspectives. "
+        )
+
     if speaker_number == total_speakers:
         prompt += (
             "You are the closing speaker. "
-            "After your arguments, summarise your team's overall position. "
+            "After your new arguments, briefly summarise your team's overall position. "
         )
 
     return prompt
@@ -124,10 +134,18 @@ def build_final_prompt(topic, teams):
     team_list = ", ".join(t["name"] for t in teams)
 
     return (
-        f"You are an analyst reviewing a multi-team debate on: '{topic}'. "
+        f"You are an expert analyst reviewing a multi-team debate on: '{topic}'. "
         f"The teams were: {team_list}. "
-        "Your job is to summerize the debate. "
-        "Give an answer for the topic, use arguments from both sides. "
+        "Your job is to write a comprehensive, well-structured answer to the topic question. "
+        "The debate transcript is provided only as reference material — your answer must go beyond it. "
+        "You MUST independently identify and include ALL major arguments on ALL sides of this topic, "
+        "whether or not the debaters raised them. Do not limit yourself to what was said in the debate. "
+        "For each argument, provide specific evidence, concrete examples, or statistics where possible "
+        "— do not merely list claims without support. "
+        "Structure your answer with clear sections covering each distinct perspective. "
+        "Do not pick a side — represent all perspectives fairly and proportionally. "
+        "Your answer must be thorough enough that a reader would not need to read the debate "
+        "transcript to understand the full picture of this topic. "
         "You must respond in English only, regardless of your default language."
     )
 
@@ -201,12 +219,17 @@ def run_debate():
     log("FINAL OUTPUT")
     log("=" * 70)
 
-    user_prompt = (
+    analysis_user = (
         f"The debate topic is: '{TOPIC}'.\n\n"
-        f"Full debate log:\n\n{debate_log}\n\n"
-        "Provide your structured answer to the topic."
+        f"Below is the full debate transcript for reference:\n\n"
+        f"<debate_transcript>\n{debate_log}\n</debate_transcript>\n\n"
+        "Now write your comprehensive independent analysis of the topic. "
+        "Remember: the transcript above is reference material only. "
+        "Your answer must stand alone as a complete and balanced treatment of the topic, "
+        "covering all major perspectives and arguments regardless of what the debaters said."
     )
-    finalOutput = call_model(build_final_prompt(TOPIC, teams), user_prompt)
+    finalOutput = call_model(build_final_prompt(TOPIC, teams), analysis_user,
+                             temperature=ANALYSIS_TEMPERATURE)
 
     log(f"\n{finalOutput}\n")
 

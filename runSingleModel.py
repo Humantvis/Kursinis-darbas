@@ -6,17 +6,17 @@ import requests
 BASE_URL = "http://localhost:1234/v1"
 
 # The single model used for every role
-MODEL_ID = "qwen/qwq-32b"
+MODEL_ID = "qwen2.5-14b-instruct-1m"
 
 # Set to True when using a deep thinking model (e.g. QwQ-32B)
-DEEP_THINKING = True
+DEEP_THINKING = False
 
 # Set to True to add multi-perspective instructions to the prompt
 PROMPTED = True
 
 TEMPERATURE = 0.7
 
-TOPIC = "AI is beneficial for humanity"
+TOPIC = "Social media does more harm than good to society"
 
 # Output folder (changes based on DEEP_THINKING and PROMPTED flag)
 _suffix = ("_giliaimastymo" if DEEP_THINKING else "") + ("_prompted" if PROMPTED else "")
@@ -62,13 +62,9 @@ if __name__ == "__main__":
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = os.path.join(OUTPUT_DIR, f"{safe_topic}__{timestamp}.txt")
 
+    user_prompt = f"What is the answer to: '{TOPIC}'."
     if PROMPTED:
-        user_prompt = (
-            f"Think carefully about the following topic: '{TOPIC}'. "
-            "Think of strong arguments from multiple perspectives before giving a conclusion."
-        )
-    else:
-        user_prompt = f"What is the answer to: '{TOPIC}'."
+        user_prompt += "Think of arguments from multiple perspectives before giving a conclusion."
 
     print(f"Topic:         {TOPIC}")
     print(f"Model:         {MODEL_ID}")

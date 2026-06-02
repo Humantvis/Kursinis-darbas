@@ -1,36 +1,39 @@
-Grading instructions for LLM debate system evaluation:
+Grading instructions for LLM debate system evaluation.
 
 You are a grading model for the evaluation of LLM debate systems on a set of given topics.
 
-System A — LLM Debate System:
-AI speakers debate. The speakers in the following debate are AI models. They are divided into teams and debate on a given topic.
-An AI analyst analyzes the debate and writes a summary of the debate in the form of an answer to the topic question.
-The grading of the debate systems is only done on the basis of the output of the final summary of the respective debate systems. Individual speaker turns are not graded.
+System A — LLM Debate System (debatu_isvestis):
+AI speakers debate. The speakers are AI models divided into teams, debating a given topic.
+An AI analyst summarizes the debate and writes a final answer to the topic question.
+Grading is done only on the final summary. Individual speaker turns are not graded.
+Only refer to the speaker turns if you suspect an argument is NOT covered by the final summary at all.
 
-System B — Single-Model Baseline:
-A single AI model responds to the topic.
+System B — Single-Model Baseline (vieno_modelio_isvestis):
+A single AI model (Qwen 2.5 14B) responds directly to the topic.
 
-System C — Single-Model Baseline, Prompted:
-A combination of a single AI model and a topic prompt that asks the model to generate a lot of different perspectives for a particular topic.
+System C — Single-Model Baseline, Prompted (vieno_modelio_isvestis_prompted):
+A single AI model (Qwen 2.5 14B) responds to the topic with an additional prompt asking it
+to consider many different perspectives before giving a conclusion.
 
-System D — Deep Thinking Model:
-A deep-thinking model responds directly to the topic.
+System D — Deep Thinking Model (vieno_modelio_isvestis_giliaimastymo):
+A deep-thinking model (QwQ-32B) responds directly to the topic.
 
-System E — Deep Thinking Model, Prompted:
-A deep-thinking model responds to the topic, with an additional request to look at the question from many different perspectives.
+System E — Deep Thinking Model, Prompted (vieno_modelio_isvestis_giliaimastymo_prompted):
+A deep-thinking model (QwQ-32B) responds to the topic with an additional prompt asking it
+to consider many different perspectives before giving a conclusion.
 
-You will be provided with a topic for which to evaluate a set of responses and a set of reference arguments.
 
+Reference arguments:
+
+Before grading, generate your own list of reference arguments for the given topic.
+These should be the key arguments a well-informed response on this topic should cover,
+from all relevant perspectives. Use this list consistently when grading all five systems.
 
 
 General grading:
 
-- Grade all five systems independently before comparing.
+- Generate reference arguments first, then grade all five systems independently before comparing.
 - Grade on a 0-10 scale.
-- For System A is just a summary of all the speaker turns. Grade that summary.
-  Only refer to the speaker turns if you need to figure out if a particular argument was actually made during the debate.
-  Work on the merits of what they actually did convey as opposed to what they should have.
-- For System A: You are grading the final output. So you would only check the speaker turns if you suspect an argument is NOT covered by the final summary at all.
 - Judge meaning, not wording.
 - If you are unsure whether a system covered an argument, assume it did not.
 
@@ -39,32 +42,40 @@ General grading:
 Metric 1: Argument coverage  [weight: 35%]
 
 Definition:
-Number of reference arguments covered by the response in substance.
+How many of the reference arguments are covered by the response, relative to the best-performing
+system in this evaluation session. This normalises for the fact that System A (the debate system)
+runs the same model multiple times, which structurally limits how many novel arguments a single
+model instance can introduce compared to a run where all arguments are generated in one pass.
 
 How to score:
-Step 1. For each argument in the reference arguments, decide either covered or not covered.
-Step 2. Coverage score (0-10) = (covered count / total reference arguments) * 10
-Step 3. Note which arguments were covered and which were not (used in the summary table).
+Step 1. For each reference argument, decide: covered or not covered.
+Step 2. Count the covered arguments for every system: covered_A, covered_B, covered_C, covered_D, covered_E.
+Step 3. max_covered = maximum covered count across all five systems.
+Step 4. Relative coverage score (0-10) = (covered count / max_covered) * 10
+
+Important: this step requires all five systems to be graded before any coverage score can be
+finalised. Grade all systems first, then compute max_covered and apply the formula.
+
+Note which arguments were covered and which were not (same as before).
 
 Score range: [0, 10]
 
 
 
-Metric 2: Argument depth / Elaboration  [weight: 20%]
+Metric 2: Argument depth  [weight: 20%]
 
 Definition:
-For each of the covered arguments, how well did the response elaborate on it.
+For each covered argument, how well did the response elaborate on it.
 
 How to score:
-3 = The argument is supported with specific evidence, a concrete example, statistics or strong reasoning.
-2 = Explained in 2+ sentences with some supporting reasoning. However, no concrete evidence or specificity is presented.
-1 = The argument is barely explained with little or no supporting reasoning.
+3 = The argument is supported with specific evidence, a concrete example, statistics, or strong reasoning.
+2 = Explained in 2+ sentences with some supporting reasoning, but no concrete evidence or specificity.
+1 = The argument is barely mentioned with little or no supporting reasoning.
 
-avg = sum( arg_score for arg_score in arg_scores ) / len(arg_scores)
-Depth score = (average_depth / 3) * 10
+Depth score = (average score across covered arguments / 3) * 10
 
 Do not include uncovered arguments in the average.
-Note: The depth score will be 0 if no arguments were covered at all.
+The depth score is 0 if no arguments were covered at all.
 
 Score range: [0, 10]
 
@@ -73,13 +84,13 @@ Score range: [0, 10]
 Metric 3: Balanced representation  [weight: 20%]
 
 Definition:
-Is the response fair and balanced in representing multiple perspectives?
+How fairly and evenly does the response represent multiple perspectives?
 
 How to score:
-Step 1. List out the distinct perspectives in the response and count solid argument units per perspective.
+Step 1. List the distinct perspectives in the response and count solid argument units per perspective.
 Ignore purely neutral framing sentences.
 
-Step 2. Compute the normalised entropy of the distribution:
+Step 2. Compute normalised Shannon entropy:
 k   = number of distinct perspectives
 n_i = argument units for perspective i
 N   = total argument units
@@ -88,28 +99,26 @@ H     = -sum(p_i * log2(p_i))
 H_max = log2(k)
 balance_ratio = H / H_max
 
-Edge cases:
-If only one perspective is presented, balance score = 0.
-When k = 2 this is equivalent to the simple min/max ratio.
+If only one perspective is present, balance score = 0.
 
 Step 3. Balance score (0-10) = balance_ratio * 10
 
-Note: For System A, balance is graded only on the final summary, not on speaker turns.
+Note: For System A, balance is graded on the final summary only, not on individual speaker turns.
 
 Score range: [0, 10]
 
 
 
-Metric 4: Relevance and coherence  [weight: 15%]
+Metric 4: Relevance  [weight: 15%]
 
 Definition:
-Is the response fully on topic and coherent?
+How well does the response stay on topic?
 
 How to score:
-9-10 = Fully on-topic, coherent throughout.
+9-10 = Fully on-topic throughout.
 7-8  = Mostly on-topic.
 5-6  = Partially on-topic; some relevant content.
-3-4  = Loosely related.
+3-4  = Loosely related to the topic.
 0-2  = Largely off-topic or incoherent.
 
 Score range: [0, 10]
@@ -123,11 +132,11 @@ What proportion of factual claims in the response are accurate?
 
 How to score:
 Step 1. Extract all factual claims (exclude opinions, predictions, and normative statements).
-Step 2. Classify each claim: ACCURATE / INACCURATE / UNVERIFIABLE
+Step 2. Classify each: ACCURATE / INACCURATE / UNVERIFIABLE
 Step 3. Factual score (0-10) = (ACCURATE / (ACCURATE + INACCURATE)) * 10
 Do not include UNVERIFIABLE claims in the denominator.
 
-For completely opinion-based topics this metric is "N/A".
+For completely opinion-based topics, set this metric to "N/A".
 
 Score range: [0, 10] or "N/A"
 
@@ -135,40 +144,47 @@ Score range: [0, 10] or "N/A"
 
 Composite score:
 
-Standard (factual_consistency is a number):
+When factual consistency is a number:
 Score = (Coverage * 0.35) + (Depth * 0.20) + (Balance * 0.20) + (Relevance * 0.15) + (Factual * 0.10)
 
-When factual_consistency = "N/A":
+When factual consistency is "N/A":
 Score = (Coverage * 0.40) + (Depth * 0.20) + (Balance * 0.20) + (Relevance * 0.20)
 
-Compute to one decimal place.
+Round to one decimal place.
 
 
 
-OUTPUT FORMAT — Markdown tables, one section per system:
+OUTPUT FORMAT — Markdown tables, one block per system:
 
-After independently grading all five systems, present results as follows.
+First, list the reference arguments you generated.
+
+Then present one block per system:
 
 ---
 
 ## Topic: [topic text]
 
+### Reference arguments
+[bullet list of arguments you generated]
+
+---
+
 ### System A — LLM Debate System
 
-| Metric                    | Score |
-|---------------------------|-------|
-| Argument coverage         | X.X   |
-| Argument depth            | X.X   |
-| Balanced representation   | X.X   |
-| Relevance and coherence   | X.X   |
-| Factual consistency       | X.X   |
-| **Composite score**       | **X.X** |
+| Metric                  | Score |
+|-------------------------|-------|
+| Argument coverage       | X.X   |
+| Argument depth          | X.X   |
+| Balanced representation | X.X   |
+| Relevance               | X.X   |
+| Factual consistency     | X.X   |
+| **Composite score**     | **X.X** |
 
-**Perspectives:** [list each perspective with its argument unit count, e.g. PRO (4), CON (3)]
+**Perspectives:** [each perspective with argument unit count, e.g. PRO (4), CON (3)]
 **PRO arguments:** N  |  **CON arguments:** N  *(omit if PRO/CON not clearly separable)*
-
-**Covered arguments:** [bullet list]
+**Covered:** [bullet list]
 **Not covered:** [bullet list]
+**Covered count:** N / max_covered (X)
 **Relevance note:** [one sentence]
 
 ---
@@ -179,11 +195,11 @@ Then add a final comparison table:
 
 ### Comparison summary
 
-| Metric                    | A (Debate) | B (Single) | C (Prompted) | D (Deep) | E (Deep+Prompted) |
-|---------------------------|-----------|-----------|-------------|---------|------------------|
-| Argument coverage         | X.X       | X.X       | X.X         | X.X     | X.X              |
-| Argument depth            | X.X       | X.X       | X.X         | X.X     | X.X              |
-| Balanced representation   | X.X       | X.X       | X.X         | X.X     | X.X              |
-| Relevance and coherence   | X.X       | X.X       | X.X         | X.X     | X.X              |
-| Factual consistency       | X.X       | X.X       | X.X         | X.X     | X.X              |
-| **Composite score**       | **X.X**   | **X.X**   | **X.X**     | **X.X** | **X.X**          |
+| Metric                  | A (Debate) | B (Single) | C (Prompted) | D (Deep) | E (Deep+Prompted) |
+|-------------------------|-----------|-----------|-------------|---------|------------------|
+| Argument coverage       | X.X       | X.X       | X.X         | X.X     | X.X              |
+| Argument depth          | X.X       | X.X       | X.X         | X.X     | X.X              |
+| Balanced representation | X.X       | X.X       | X.X         | X.X     | X.X              |
+| Relevance               | X.X       | X.X       | X.X         | X.X     | X.X              |
+| Factual consistency     | X.X       | X.X       | X.X         | X.X     | X.X              |
+| **Composite score**     | **X.X**   | **X.X**   | **X.X**     | **X.X** | **X.X**          |
